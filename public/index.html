@@ -461,8 +461,9 @@
             usernameInput.value = `مستخدم-${Math.floor(Math.random() * 1000)}`;
             
             // اتصال WebSocket
-            const socket = io(window.location.origin);
-            
+            const socket = io(window.location.origin, {
+  path: '/api/socket.io'
+});
             // حالة التطبيق
             let currentUser = {
                 id: '',
