@@ -1,0 +1,13 @@
+{
+  "name": "vercel-socketio-chat",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "@vercel/node": "^2.15.3"
+  }
+}
