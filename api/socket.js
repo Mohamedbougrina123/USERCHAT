@@ -1,32 +1,33 @@
+import http from 'http';
 import { Server } from 'socket.io';
 
-// تخزين بيانات الدردشة في الذاكرة (للاستخدام الحقيقي تحتاج لقاعدة بيانات)
-let users = [];
-let messages = [];
-const ADMIN_PASSWORD = "bougrinamohamedadmin@#$123@#$"; // كلمة سر الأدمن
+export default function (req, res) {
+  if (!res.socket.server.io) {
+    const httpServer = http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('Socket.io server');
+    });
 
-export default function SocketHandler(req, res) {
-  if (res.socket.server.io) {
-    console.log('Socket is already running');
-  } else {
-    console.log('Socket is initializing');
-    const io = new Server(res.socket.server);
-    res.socket.server.io = io;
+    const io = new Server(httpServer, {
+      path: '/api/socket.io',
+      addTrailingSlash: false,
+      cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+      }
+    });
+
+    let users = [];
+    let messages = [];
+    const ADMIN_PASSWORD = "bougrinamohamedadmin@#$123@#$";
 
     io.on('connection', (socket) => {
-      console.log(`New user connected: ${socket.id}`);
+      socket.emit('init', { userId: socket.id, messages });
       
-      // إرسال البيانات الأولية
-      socket.emit('init', {
-        userId: socket.id,
-        messages: messages
-      });
-
-      // تعيين اسم المستخدم
       socket.on('set_username', (username) => {
         const user = {
           id: socket.id,
-          username: username,
+          username,
           isAdmin: false,
           ip: socket.handshake.address,
           userAgent: socket.handshake.headers['user-agent']
@@ -35,7 +36,6 @@ export default function SocketHandler(req, res) {
         users.push(user);
         io.emit('users_list', users);
         
-        // إرسال إشعار دخول
         const notification = {
           type: 'notification',
           text: `${username} انضم إلى الدردشة`,
@@ -46,7 +46,6 @@ export default function SocketHandler(req, res) {
         io.emit('new_message', notification);
       });
 
-      // إرسال رسالة
       socket.on('send_message', (data) => {
         const user = users.find(u => u.id === socket.id);
         if (!user) return;
@@ -64,7 +63,6 @@ export default function SocketHandler(req, res) {
         io.emit('new_message', message);
       });
 
-      // تسجيل دخول الأدمن
       socket.on('admin_login', ({ password }) => {
         const user = users.find(u => u.id === socket.id);
         if (!user) return;
@@ -85,7 +83,6 @@ export default function SocketHandler(req, res) {
         }
       });
 
-      // أوامر الأدمن
       socket.on('admin_command', (command) => {
         const user = users.find(u => u.id === socket.id);
         if (!user || !user.isAdmin) return;
@@ -117,7 +114,6 @@ export default function SocketHandler(req, res) {
         io.to(socket.id).emit('new_message', adminMessage);
       });
 
-      // عند الانفصال
       socket.on('disconnect', () => {
         const user = users.find(u => u.id === socket.id);
         if (user) {
@@ -135,6 +131,13 @@ export default function SocketHandler(req, res) {
         }
       });
     });
+
+    httpServer.listen(0, () => {
+      console.log('Socket.io server running');
+    });
+    
+    res.socket.server.io = io;
   }
+  
   res.end();
 }
