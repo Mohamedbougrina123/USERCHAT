@@ -6,5 +6,5 @@
       "destination": "/api/socket"
     }
   ],
-  "public": "public"
+  "public": true
 }
