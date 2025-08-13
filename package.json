@@ -1,6 +1,7 @@
 {
-  "name": "vercel-socketio-chat",
+  "name": "userchat",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev"
   },
